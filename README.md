@@ -1,7 +1,7 @@
 
 # Background
 
-So my university has a SMB server in their local network, it contains all  thelecture notes, slides and study stuff. Problem is, I want to access it not only in local network but everywhere (yes everywhere). 
+So my university has a SMB server in their local network, it contains all  the lecture notes, slides and study stuff. Problem is, I want to access it not only in local network but everywhere (yes everywhere). 
 That's the backstory.
 
 # Plan
@@ -17,7 +17,6 @@ So there are 3 ways, that comes into mind:
 
 1) Use tailscale (or Zerotier): 
 Probably the easiest way that I'd like to recommend you to try first. It gives you a unique IP without needing to talk to bad ISP. Easily forward ports and access the network. 
-
 But for me, tailscale was blocked by network (yeah), so I tried Zerotier with ssh first. It worked... kind of. First it was very slow for me (because it couldn't do P2P, because of firewalls). Initially I was just trying to use ssh, but it only connected, I could never write anything. (Probably CGNAT and stuff) (If it's your first time doing this, dont worry, I will try explaining them later or just google it)
 
 So yeah they didn't work
