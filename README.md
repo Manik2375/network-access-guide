@@ -34,3 +34,59 @@ And it was the best option I could think of (And fun too)
 3) A domain (Optional if you have static ip)
 
 
+# Let's start :D
+
+Cool, i believe you have everything. Now
+1) Start the raspbery pi and another device (mobile or computer), and make sure that they are in same network.
+
+Now, we will set up ssh in Raspberry pi. (https://www.raspberrypi.com/documentation/computers/remote-access.html). Now connect your other device to the raspbery pi ssh (Although we won't be using ssh in final setup, I thought it might be a good start) 
+> (**Note:** to connect to your raspberry pi in android, you can use `termux` or `termius` from play store)
+
+Make sure everything's working. 
+
+2) Now time for your vps. If you are using Azure, any B version low powered vps will suffice. First try connecting to your vps using ssh (default port is 22). Once your VPS is started, the process of connecting is similar to that of raspbery pi. Just make sure that your network rules are working. 
+
+> **NOTE:** If for some reason you aren't able to connect to your virtual machine, try connecting using a different network. If it works on different network, it must mean that your network (like my university) is blocking `22` port. To fix that, we need to move our ssh port to somewhere else.
+>
+> The best option is `443` port which is for HTTPS connection (you should try other ports before this). To change your ssh port, use `sudo vim /etc/ssh/sshd_default` (or you can use any other text editor). And there find `Port 22` and change it to `Port 443`.
+>
+> Then find `GatewayPorts no` and change it to `GatewayPorts yes` (we will explain this later)
+>
+> Then run `sudo systemctl restart sshd` (But for me port change didn't work until I restarted the whole vps) 
+
+
+Cool, now your vps has a ssh port that works with your local network. 
+
+Now vps stuff is mostly done, now let's move to raspberry pi. 
+
+Our plan is to connect to the smb server, mount it to the filesystem and access that mounted files everywhere :D
+
+We need some packages: 
+1) autossh - To make our ssh connection consistent between raspbery pi and vps, like if connection gets closed, autossh will try to reconnect
+2) FileBrowser - To create a good looking interface for viewing files (https://filebrowser.org/)[https://filebrowser.org/)
+> **NOTE:** Technically, if we just forward our ssh through vps to internet, we can directly view our mounted filesystem thanks to SFTP, but we need a SFTP client for that, like `termius` provides that, but I feel that's bothersome
+3) Install packages for command yourself that don't work.
+
+After everything's installed, we can easily mount the smb server to our filesystem.
+
+First, let's create a directory,
+```bash
+mkdir -p /mnt/smbshare
+```
+
+Now, let's connect to smb server and mount it to the created directory
+```bash
+sudo mount -t cifs //smbserverIP/sharename /mnt/smbshare -o username=pi,password=yourpass
+```
+
+Cool, if you have successfully mounted a smbserver you can confirm by doing 
+```bash
+ls /mnt/smbshare
+```
+
+After confirmed, let's start the filebrowser. The default port is `8080`
+```bash
+filebrowser -R /mnt/smbshare
+```
+
+Now you can view your smbserver files for selected sharename in `localhost:8080` in browser. Hurray!!
