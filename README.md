@@ -36,6 +36,7 @@ And it was the best option I could think of (And fun too)
 
 # Let's start :D
 
+## Step 1: Basic setup
 Cool, i believe you have everything. Now
 1) Start the raspbery pi and another device (mobile or computer), and make sure that they are in same network.
 
@@ -84,9 +85,76 @@ Cool, if you have successfully mounted a smbserver you can confirm by doing
 ls /mnt/smbshare
 ```
 
-After confirmed, let's start the filebrowser. The default port is `8080`
+After confirmed, let's start the filebrowser. The default port is `8080`. 
+
+
 ```bash
 filebrowser -R /mnt/smbshare
 ```
 
 Now you can view your smbserver files for selected sharename in `localhost:8080` in browser. Hurray!!
+
+## Step 2: Connecting things 
+
+I believe you have done the basic setup, and now you can connect to your VPS using `ssh`. 
+
+Cool now let's forward our port, the easiest way to forward is use what's known as Remote Port forwarding (SSH tunnel), for that let's do 
+
+```bash
+ssh -N -R 8080:localhost:8080 user@remoteIP -p 443
+```
+`-R` tells to forward `localhost:8080` to `remoteIP` `8080` port.
+`-N` flag means to not open a shell (we don't need it)
+
+But this pose a problem, if we ever get disconneted we have to run this command again. To solve that we will use `autossh`
+
+We'll also be forwarding the raspberry pi ssh port for development time:
+
+```bash
+autossh -M 0 -N -R 2222:localhost:22 -R 8080:localhost:8080 -p 443 user@remoteIP
+```
+
+Also make sure instead of username/password you use key based authentication so that this works without any hiccups.
+
+Cool, now if you don't get any error you should be able to access these in your vps. (If you aren't able to access it, make sure to check your firewall rules in vps)
+
+In your vps, try using `curl -I localhost:8088` to confirm whether server is being forwarded.
+
+Good, now in your Azure VM settings, in network manager, make sure you add inbound rules for Port `8080` (and Port `2222` for raspberry pi ssh if you want)
+
+If everything's correct, you should be able to access the filebrowser in `remoteIP:8080`, try it in your browser!
+
+If this is working, then congratulations! 
+
+
+## Step 3: Further steps
+
+Everything's working and cool. But using ip address everytime is cumbersome. 
+Not to mention, the page currently says not secure as it's HTTP. So, let's do
+
+- `sslh` - To access both ssh and https (website) at same port, i.e. 443
+- `nginx` - For reverse proxy and setting up ssl certificate
+
+But before all this, from where you bought the domain, add record of Type A with your vps address in it. 
+
+Confirm it's working by doing `ssh -p 443 user@yourDomain` 
+
+Now, we will start by configuring nginx. For SSL certificate, we will use `certbot` or maybe you got one with your domain. 
+
+X-------------------------UNDER CONSTRUCTION-----------------------------X
+
+Now, add nginx config
+
+```bash
+server {
+    listen 8443 ssl;
+    server_name your-domain.com;
+
+    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:8080;
+    }
+}```
+
