@@ -94,6 +94,11 @@ filebrowser -R /mnt/smbshare
 
 Now you can view your smbserver files for selected sharename in `localhost:8080` in browser. Hurray!!
 
+Here's how it should look (Can't show folders due to sensitive files): 
+
+<img width="1024" height="855" alt="image" src="https://github.com/user-attachments/assets/e221d441-b8c4-4505-a188-d082d6083e35" />
+
+
 ## Step 2: Connecting things 
 
 I believe you have done the basic setup, and now you can connect to your VPS using `ssh`. 
@@ -230,7 +235,6 @@ Now, if everything is working, you should be able to visit your website without 
 
 
 With this I believe everything is set up and working :D
-
 
 ## Further
 
