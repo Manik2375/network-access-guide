@@ -139,22 +139,101 @@ But before all this, from where you bought the domain, add record of Type A with
 
 Confirm it's working by doing `ssh -p 443 user@yourDomain` 
 
+### Configuring nginx 
+
 Now, we will start by configuring nginx. For SSL certificate, we will use `certbot` or maybe you got one with your domain. 
 
-X-------------------------UNDER CONSTRUCTION-----------------------------X
-
-Now, add nginx config
+We'will start wiht making configuration files. Use `sudo vim /etc/nginx/sites-available` and add 
 
 ```bash
 server {
-    listen 8443 ssl;
+    listen 80
     server_name your-domain.com;
 
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-
     location / {
-        proxy_pass http://localhost:8080;
+        ## if opened with http, redirect to https
+        return 301 https://yourDomain; 
     }
-}```
+}
+```
+Now, `sudo vim /etc/nginx/sites-available/yourDomain` and add
 
+```bash
+server {
+	listen 8443 ssl;
+	server_name your domain;
+
+	ssl_certificate /etc/letsencrypt/live/vps.manik2375.tech/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/vps.manik2375.tech/privkey.pem;
+	include /etc/letsencrypt/options-ssl-nginx.conf;
+	ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+	location / {
+		proxy_pass http://localhost:8080;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+```
+
+Now, we will create a soft link to it in `sites-enabled` 
+```bash 
+sudo ln -s /etc/nginx/sites-available/filebrowser /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/yourDomain /etc/nginx/sites-enabled/
+```
+What we have done is, added ssl certificate keys link in nginx server, and we are telling nginx to listen at port `8443` and reverse proxy the request to `8080` port which has the filebrowser hosted. 
+
+> It is recommended that you add your confguration in `sites-available` folder and create a soft link to them in `sites-enabled` folder so you can turn on or off a configruation any time
+
+After all this is done, run `sudo nginx -t` to check for any syntax error and then 
+```bash
+sudo nginx -s reload
+```
+To reload the nginx server.
+
+Now, try vising `https://yourDomain:8443` to see if it's working correctly.
+
+After this is done, we will work on sslh
+
+### Configuring sslh
+
+Make sure the `sslh` is installed. 
+
+Open `/etc/sslh.cfg` and add configuration 
+```bash
+verbose: true;
+foreground: false;
+inetd: false;
+
+listen: 
+(
+	{ host: "0.0.0.0"; port: "443"; }
+);
+
+protocols: 
+(
+	{ name: "ssh"; service: "ssh"; host: "127.0.0.1"; port: "22"; },
+	{ name: "tls"; host: "127.0.0.1"; port: "8443"; }
+);
+```
+(Make sure your write sslh config file correct, as it's really case case sensitive)
+
+Now run 
+```
+sudo systemctl restart sslh
+```
+
+Now, if everything is working, you should be able to visit your website without any port (i.e. `https://yourwebsite` i.e. at default port `443`) Same for your ssh.
+
+> If for some reason it isn't working, try checking the logs at `sudo systemctl status sslh`)
+
+
+With this I believe everything is set up and working :D
+
+
+## Further
+
+- Check the filebrowser documentation which mentions how to use `fail2ban` to add protection in your website. 
+
+- You can add a default server, which will show error message if your raspberry pi is turned off for some reasons
